@@ -1,0 +1,14 @@
+{application, zog_web,
+ [
+  {description, "zog_web - simple erlang web serving framework"},
+  {vsn, "0.3"},
+  {modules, []},
+  {registered, [zog_web_sup]},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, {zog_web_app, []}},
+  {env, []}
+ ]
+}.

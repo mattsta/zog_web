@@ -1,0 +1,6 @@
+ebin/
+doc/
+.eunit/
+*.dump
+deps/
+tags

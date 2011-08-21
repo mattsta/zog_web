@@ -1,0 +1,2 @@
+% The simplest route is a domain and a module name.
+[{domain, "zog.bz"}, {module, zog}]. % end zog.bz proplist

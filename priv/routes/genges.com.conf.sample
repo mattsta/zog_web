@@ -1,0 +1,81 @@
+% A complex route can override defaults and set
+% custom options for different paths of the domain.
+
+[{domain, "genges.com"},
+ {module, genges},
+
+ % The default_path_function is called when a top-level page doesn't
+ % have its namesake function exported from your module.
+ % Your site root (/) will use the default_path function with
+ % a path argument of [].
+ % You can use the default path function to dispatch user pages
+ % if you give users root-level names (twitter.com/bob => ["bob"] path).
+ {default_path_function, deliver_user_page},
+
+ % Unknown subdomains act the same way as default paths. If you allow
+ % anybody to use *.genges.com, you can deliver their
+ % associated subomdomains from one dispatch point.
+ {default_subdomain_function, deliver_user_subdomain},
+
+ % extra_args are made available to each Cxn of every request.
+ % Example usage: if your site configs are created per-user,
+ % (say, matt.genges.com), then attach the user id
+ % to extra_args.  Every request to matt.genges.com will have
+ % extra_args populated in your Cxn argument so you can
+ % readily retrieve user id/site id without fetching
+ % hostname <=> user id every time.
+ {extra_args, []},
+
+ % path_mods let you use different functions for various paths on your
+ % site.  path_mods is a list of {TokenizedPath, Module} tuples.
+ % Below, path /account (tokenized as ["account"]) uses module
+ % genges_account for all sub-pages instead of the top level module.
+ % The path passed in to path_mods modules has the originating
+ % path stripped off (/account/bob would get ["bob"] in the path_mods module).
+ {path_mods,  [{["account"], genges_account}]},
+
+ % path_strategies allow you to centralize access policies
+ % on static paths (no wildcards or pattern matching).
+ % Strategy "authenticate" verifies a user has an active
+ % session based on their cookie. (requires zog_user)
+ % strategy "authorize" runs your authorization function
+ % before allowing access to the regular path function.
+ % Your authorize function receives the current user id
+ % and the requested path so it can determine user authorization.
+ % Your authorize function returns 'allow', 'deny', or
+ % {deny, Reason}.  If a user is not authorized, they
+ % receive an error instead of getting passed along to
+ % the actual content delivery function they requested.
+ % Paths are exact-match.  They don't protect any content
+ % under the requested path -- they only protect *exactly* the
+ % requested path.
+ {path_strategies, [
+   [{authenticate,
+     [{not_authenticated_function, login},
+       {paths, [
+         ["account"],        % http://genges.com/account
+         ["mail", "read"],   % http://genges.com/mail/read
+         ["mail", "delete"], % http://genges.com/mail/delete
+         ["event-join"]      % http://genges.com/event-join
+       ]}
+     ]
+   }],
+   [{authorize,
+     [{not_authorized_function, illegal_access},
+      {paths, [
+        % for /admin/account/peek, make sure only our
+        % select group of super-admins can use it
+        {["admin", "account", "peek"], authorize_peek},
+
+        % for all other /admin/ access, allow any admins
+        {["admin"], authorize_admin},
+
+        % verify only owners of posts can edit/delete
+        {["posts", "edit"],   authorize_post_owner},
+        {["posts", "delete"], authorize_post_owner}
+
+      ]} % end paths
+     ] % end authorize proplist
+   }] % end authorize
+ ]} % end path_strategies
+]. % end domain proplist for genges.com
