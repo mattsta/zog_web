@@ -200,7 +200,8 @@ route(Hostname) when is_list(Hostname) andalso is_list(hd(Hostname)) ->
      [] -> case ets:info(?RTABLE, size) of
              1 -> case ets:first(?RTABLE) of
                     '$end_of_table'-> [];
-                               Key -> route(Key)
+                               Key -> SingleRoute = route(Key),
+                                      SingleRoute#zog_route{hostname=Hostname}
                    end;
              _ -> route(tl(Hostname))
            end
