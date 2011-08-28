@@ -191,7 +191,7 @@ randhex(Bytes) ->
 %%% form processing
 %%%----------------------------------------------------------------------
 -spec form_vars([{string(), string()}], [atom() | string()]) -> binary().
-form_vars([], _) -> [];
+form_vars([], Requested) -> [undefined || _ <- lists:seq(1, length(Requested))];
 form_vars(_, []) -> [];
 form_vars(FormVars, [RequestedVar | Xs]) when is_atom(RequestedVar) ->
   form_vars(FormVars, [atom_to_list(RequestedVar) | Xs]);
