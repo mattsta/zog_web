@@ -166,7 +166,7 @@ handler_name(Path, DefaultFun) ->
 -compile({inline, [{handler_mod, 2}]}).
 handler_mod(Path, #zog_route{handler_module = DefaultMod,
                              path_mods = PathMods}) ->
-  get_value(Path, PathMods, DefaultMod).
+  get_value(hd(Path), PathMods, DefaultMod).
 
 -compile({inline, [{fun_or_exported, 5}]}).
 % Auto-duplicate HandlerFun here to fake a default.

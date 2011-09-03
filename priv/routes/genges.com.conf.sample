@@ -28,11 +28,12 @@
 
  % path_mods let you use different functions for various paths on your
  % site.  path_mods is a list of {TokenizedPath, Module} tuples.
- % Below, path /account (tokenized as ["account"]) uses module
+ % Below, path /account uses module
  % genges_account for all sub-pages instead of the top level module.
  % The path passed in to path_mods modules has the originating
  % path stripped off (/account/bob would get ["bob"] in the path_mods module).
- {path_mods,  [{["account"], genges_account}]},
+ % Only top-level paths work here (basically, hd(TokenizedPath)).
+ {path_mods,  [{"account", genges_account}]},
 
  % path_strategies allow you to centralize access policies
  % on static paths (no wildcards or pattern matching).
