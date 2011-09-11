@@ -15,14 +15,18 @@
 -export([strategy_for_hostpath/2]).
 -export([update_route/3]).
 -export([add_config_dir/1]).
+-export([route_db_name/1, add_route_db_entry/1,
+         add_route_db_entry_immediate/1]).
 
 -record(state, {route_table,
                 strategy_table,
+                route_db_table,
                 file_domain_table}).
 
 -define(RTABLE, zog_route_server_routes).          % RTABLE = Route Table
 -define(STABLE, zog_route_server_strategies).      % STABLE = Strategy Table
 -define(FTABLE, zog_route_server_filename_domain). % FTABLE = filename<->domain
+-define(RDBTABLE, zog_route_server_db_routes).     % RDBTABLE = DB of configs
 
 %%%--------------------------------------------------------------------
 %%% api callbacks
@@ -37,15 +41,17 @@ init([]) ->
   EtsArgs = [public, named_table,
              {keypos, 2},  % we're storing #zog_route{}s
              {read_concurrency, true}],
+  EtsFirstKeyArgs = EtsArgs -- [{keypos, 2}],
   RouteTableId = ets:new(?RTABLE, EtsArgs),
   StrategyTableId = ets:new(?STABLE, EtsArgs),
-  FileDomainTableId = ets:new(?FTABLE,
-                        [duplicate_bag | EtsArgs -- [{keypos,2}]]),
+  FileDomainTableId = ets:new(?FTABLE, [duplicate_bag | EtsFirstKeyArgs]),
+  RouteDBTableId = ets:new(?RDBTABLE, EtsFirstKeyArgs),
 
   load_routes_by_env(),
 
   {ok, #state{route_table = RouteTableId,
               strategy_table = StrategyTableId,
+              route_db_table = RouteDBTableId,
               file_domain_table = FileDomainTableId}}.
 
 handle_call(_What, _From, State) ->
@@ -115,7 +121,10 @@ load_route_by_file(Filename) ->
 
 delete_route_by_file(Filename) ->
   case ets:lookup(?FTABLE, Filename) of
-    [{Filename, Hostname}] -> ets:delete(?RTABLE, Hostname),
+    [{Filename, Hostname}] -> [R] = ets:lookup(?RTABLE, Hostname),
+                              HandlerMod = R#zog_route.handler_module,
+                              code:purge(HandlerMod),
+                              ets:delete(?RTABLE, Hostname),
                               Pattern =
                               #zog_route_strategy{hostpath = {Hostname, '_'}},
                               ets:match_delete(?STABLE, Pattern);
@@ -194,24 +203,49 @@ route(Hostname) when is_list(Hostname) andalso is_list(hd(Hostname)) ->
   % See if the hostname we used exists first.  If so, use that route.
   case ets:lookup(?RTABLE, Hostname) of
     [R] -> R;
-           % If the hostname doesn't exist, and we only have *one* route entry,
-           % use that route entry to service this request.  We don't care about
-           % domain-level multitennancy if we only have one route entry.
-     [] -> case ets:info(?RTABLE, size) of
-             1 -> case ets:first(?RTABLE) of
-                    '$end_of_table'-> [];
-                               Key -> SingleRoute = route(Key),
-                                      SingleRoute#zog_route{hostname=Hostname}
-                   end;
-             _ -> route(tl(Hostname))
-           end
+     [] -> route(tl(Hostname))
   end;
 route(Hostname) when is_list(Hostname) andalso is_integer(hd(Hostname)) ->
   route(string:tokens(Hostname, "."));
-route([]) -> [].
+route([]) -> noroute.
 
 routes() ->
   ets:tab2list(?RTABLE).
+
+% Use the Route Config DB to load a config instead of from a file
+route_db_name(Hostname) when is_list(Hostname) andalso is_list(hd(Hostname)) ->
+  case ets:lookup(?RDBTABLE, Hostname) of
+    [{Hostname, R}] -> case lists:keyfind(module, 1, R) of
+                         {module, M} when is_atom(M) ->
+                           load_routes([R], {from_db, Hostname});
+                         {module, {binary, B}} ->
+                           Filename = string:join(["zogmod" | Hostname], "_"),
+                           ModName = list_to_atom(Filename),
+                           code:purge(HandlerMod),
+                           code:load_binary(ModName, Filename, B),
+                           NewResult = lists:keyreplace(module, 1,
+                                         R, {module, ModName}),
+                           load_routes([NewResult], {from_db, Hostname});
+                         {module, {fetch, Name}} ->
+                           throw({not_implemented, {fetch, Name}})
+                       end,
+                       route(Hostname);
+                 [] -> route_db_name(tl(Hostname))
+  end;
+route_db_name([]) -> nodbroute.
+
+add_route_db_entry(Config) ->
+  Hostname =
+  case lists:keyfind(domain, 1, Config) of
+    H when is_list(H) and is_list(hd(H)) -> H;  % domain is already tokenized
+    H when is_list(H) -> string:tokens(H, ".")
+  end,
+  ets:insert(?RDBTABLE, {Hostname, Config}),
+  Hostname.
+
+add_route_db_entry_immediate(Config) ->
+  Hostname = add_route_db_entry(Config),
+  route_db_name(Hostname).
 
 strategy_for_hostpath(Domain, Path) ->
   ets:lookup(?STABLE, {Domain, Path}).

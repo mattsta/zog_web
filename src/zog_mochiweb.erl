@@ -46,10 +46,16 @@ loop(Req) ->
 
 
 mux_domain(Req, Hostname, Path) ->
-  TokenizedHostname = string:tokens(Hostname, "."),
-  case zog_route_server:route(TokenizedHostname) of
-    [] -> [];
-     R -> run_route(Req, TokenizedHostname, Req:get(method), Path, R)
+  TokenizedHost = string:tokens(Hostname, "."),
+  RunRoute = fun(Route) ->
+               run_route(Req, TokenizedHost, Req:get(method), Path, Route)
+             end,
+  case zog_route_server:route(TokenizedHost) of
+    #zog_route{} = R -> RunRoute(R);
+             noroute -> case zog_route_server:route_by_name(TokenizedHost) of
+                          #zog_route{} = R -> RunRoute(R);
+                                         _ -> []
+                        end
    end.
 
 
