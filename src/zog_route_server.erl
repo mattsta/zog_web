@@ -148,7 +148,11 @@ load_routes([Route|T], Filename) ->
   UnkSubdomain = get_value(default_subdomain_function, Route,default_subdomain),
   PathMods = get_value(path_mods, Route, []),
   PathStrategies = get_value(path_strategies, Route, []),
-  TokenizedDomain = string:tokens(Domain, "."),
+  StringDomain = case Domain of
+                   D when is_binary(D) -> binary_to_list(D);
+                     D when is_list(D) -> D
+                 end,
+  TokenizedDomain = string:tokens(StringDomain, "."),
   NewRoute = #zog_route{hostname = TokenizedDomain,
                         handler_module = Module,
                         default_path_function = UnkPath,
@@ -218,10 +222,11 @@ route_db_name(Hostname) when is_list(Hostname) andalso is_list(hd(Hostname)) ->
     [{Hostname, R}] -> case lists:keyfind(module, 1, R) of
                          {module, M} when is_atom(M) ->
                            load_routes([R], {from_db, Hostname});
-                         {module, {binary, B}} ->
-                           Filename = string:join(["zogmod" | Hostname], "_"),
-                           ModName = list_to_atom(Filename),
-                           code:purge(HandlerMod),
+                         {module, {binary, {ModName, B}}} ->
+                           % ModName is atom of Filename
+                           Filename = atom_to_list(ModName),
+                           code:purge(ModName),
+                           io:format("Loading ~p, ~p~n", [ModName, Filename]),
                            code:load_binary(ModName, Filename, B),
                            NewResult = lists:keyreplace(module, 1,
                                          R, {module, ModName}),
@@ -236,11 +241,13 @@ route_db_name([]) -> nodbroute.
 
 add_route_db_entry(Config) ->
   Hostname =
-  case lists:keyfind(domain, 1, Config) of
+  case element(2, lists:keyfind(domain, 1, Config)) of
     H when is_list(H) and is_list(hd(H)) -> H;  % domain is already tokenized
+    H when is_binary(H) -> string:tokens(binary_to_list(H), ".");
     H when is_list(H) -> string:tokens(H, ".")
   end,
   ets:insert(?RDBTABLE, {Hostname, Config}),
+  % NOTE!  This does not update the RTABLE.  Use immediate for RTABLE forcing.
   Hostname.
 
 add_route_db_entry_immediate(Config) ->

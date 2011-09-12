@@ -161,7 +161,7 @@ cookie(Req, Names) when is_list(Names) andalso is_list(hd(Names)) ->
     undefined -> [undefined || _ <- Names];
       Cookies -> BakedCookies = mochiweb_cookies:parse_cookie(Cookies),
                  [case Name of
-                    {CookieName, Default} -> proplists:get_value(Name,
+                    {CookieName, Default} -> proplists:get_value(CookieName,
                                                BakedCookies, Default);
                                      Name -> proplists:get_Value(Name,
                                                BakedCookies)
@@ -171,7 +171,7 @@ cookie(Req, {Name, Default}) when is_list(Name) ->
   case cookie(Req, [Name]) of
     [Result] -> Result;
           [] -> Default
-  end.
+  end;
 cookie(Req, Name) when is_list(Name) ->
   case cookie(Req, [Name]) of
     [Result] -> Result;
@@ -200,15 +200,15 @@ randhex(Bytes) ->
 %%%----------------------------------------------------------------------
 %%% form processing
 %%%----------------------------------------------------------------------
-form_vars([], Requested) -> [undefined || _ <- lists:seq(1, length(Requested))];
 form_vars(_, []) -> [];
 form_vars(FormVars, [{RequestedVar, Def} | Xs]) when is_atom(RequestedVar) ->
   form_vars(FormVars, [{atom_to_list(RequestedVar), Def} | Xs]);
 form_vars(FormVars, [RequestedVar | Xs]) when is_atom(RequestedVar) ->
   form_vars(FormVars, [atom_to_list(RequestedVar) | Xs]);
+
 form_vars(FormVars, [{RequestedVar, Default}|Xs]) when is_list(RequestedVar) ->
   [proplists:get_value(RequestedVar, FormVars, Default) |
-    form_vars(FormVars, Xs)].
+    form_vars(FormVars, Xs)];
 form_vars(FormVars, [RequestedVar | Xs]) when is_list(RequestedVar) ->
   [proplists:get_value(RequestedVar, FormVars) | form_vars(FormVars, Xs)].
 

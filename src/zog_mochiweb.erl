@@ -52,7 +52,7 @@ mux_domain(Req, Hostname, Path) ->
              end,
   case zog_route_server:route(TokenizedHost) of
     #zog_route{} = R -> RunRoute(R);
-             noroute -> case zog_route_server:route_by_name(TokenizedHost) of
+             noroute -> case zog_route_server:route_db_name(TokenizedHost) of
                           #zog_route{} = R -> RunRoute(R);
                                          _ -> []
                         end
