@@ -23,6 +23,7 @@ stop() ->
 %%% mochiweb event loop
 %%%----------------------------------------------------------------------
 loop(Req) ->
+  process_flag(error_handler, zog_web_error_handler),
   Path = Req:get(path),
   TokenPath = string:tokens(Path, "/"),
   Host = Req:get_header_value("host"),
