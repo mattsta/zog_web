@@ -184,6 +184,20 @@ fun_or_exported(HandlerMod, HandlerFun, Method, Path, Cxn) ->
 fun_or_exported(_, Fun, _, Method, Path, Cxn) when is_function(Fun) ->
   Fun(Method, Path, Cxn);
 fun_or_exported(HandlerMod, HandlerFun, DefaultFun, Method, Path, Cxn) ->
+  fun_or_exported(first, HandlerMod, HandlerFun, DefaultFun, Method, Path, Cxn).
+
+fun_or_exported(first, HandlerMod, HandlerFun, DefaultFun, Method, Path, Cxn) ->
+  case erlang:function_exported(HandlerMod, HandlerFun, 3) of
+     true -> HandlerMod:HandlerFun(Method, Path, Cxn);
+    false -> try  % funcion_exported doesn't load modules.  this will try:
+               HandlerMod:module_info(imports) % probably empty so not wasteful
+             catch
+               _:_ -> ok  % we don't care if it failed, we run again only once
+             end,
+             fun_or_exported(again, HandlerMod, HandlerFun,
+                                    DefaultFun, Method, Path, Cxn)
+  end;
+fun_or_exported(again, HandlerMod, HandlerFun, DefaultFun, Method, Path, Cxn) ->
   case erlang:function_exported(HandlerMod, HandlerFun, 3) of
      true -> HandlerMod:HandlerFun(Method, Path, Cxn);
     false -> case is_atom(DefaultFun) of
