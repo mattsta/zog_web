@@ -15,7 +15,8 @@
 -export([strategy_for_hostpath/2]).
 -export([update_route/3]).
 -export([add_config_dir/1]).
--export([route_db_name/1, add_route_db_entry/1,
+-export([load_route_from_route_db_instead_of_file/1,
+         add_route_db_entry/1,
          add_route_db_entry_immediate/1]).
 
 -record(state, {route_table,
@@ -217,7 +218,8 @@ routes() ->
   ets:tab2list(?RTABLE).
 
 % Use the Route Config DB to load a config instead of from a file
-route_db_name(Hostname) when is_list(Hostname) andalso is_list(hd(Hostname)) ->
+load_route_from_route_db_instead_of_file(Hostname) when
+    is_list(Hostname) andalso is_list(hd(Hostname)) ->
   case ets:lookup(?RDBTABLE, Hostname) of
     [{Hostname, R}] -> case lists:keyfind(module, 1, R) of
                          {module, M} when is_atom(M) ->
@@ -235,9 +237,9 @@ route_db_name(Hostname) when is_list(Hostname) andalso is_list(hd(Hostname)) ->
                            throw({not_implemented, {fetch, Name}})
                        end,
                        route(Hostname);
-                 [] -> route_db_name(tl(Hostname))
+                 [] -> load_route_from_route_db_instead_of_file(tl(Hostname))
   end;
-route_db_name([]) -> nodbroute.
+load_route_from_route_db_instead_of_file([]) -> nodbroute.
 
 add_route_db_entry(Config) ->
   Hostname =
@@ -252,7 +254,7 @@ add_route_db_entry(Config) ->
 
 add_route_db_entry_immediate(Config) ->
   Hostname = add_route_db_entry(Config),
-  route_db_name(Hostname).
+  load_route_from_route_db_instead_of_file(Hostname).
 
 strategy_for_hostpath(Domain, Path) ->
   ets:lookup(?STABLE, {Domain, Path}).
