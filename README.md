@@ -40,6 +40,12 @@ Next Steps
 In no specific order:
 
 * Actual documentation
+  * How domain routes work
+  * How path routes work
+  * How to send a page
+  * How to stall a page
+  * How to redirect a page
+  * How to deal with parameters
 * Tests
 * Continual synchronization of features with upcoming zog components
 

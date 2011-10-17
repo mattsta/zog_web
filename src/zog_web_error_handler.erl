@@ -90,12 +90,12 @@ int() -> int.
 -spec crash(atom(), [term()]) -> no_return().
 
 crash(Fun, Args) ->
-    crash({Fun,Args,[]}).
+    crash({Fun,Args}).
 
 -spec crash(atom(), atom(), arity()) -> no_return().
 
 crash(M, F, A) ->
-    crash({M,F,A,[]}).
+    crash({M,F,A}).
 
 -spec crash(tuple()) -> no_return().
 
@@ -122,14 +122,17 @@ ensure_loaded(Module) ->
 		atom_to_list(Module) ++ "'",
 	    halt(Error);
 	Pid when is_pid(Pid) ->
-        case application:get_env(zog_web, ancillary_code_loader) of
-          {ok, LoaderFun} -> case LoaderFun(Module) of
-                               {module, _} = M -> M;
-                                             _ -> code:ensure_loaded(Module)
-                             end
+	    case code:ensure_loaded(Module) of
+          {module, Module} = Found -> Found;
+          _ ->
+    io:format("Trying to load from handler: ~p~n", [Module]),
+            case application:get_env(zog_web, ancillary_code_loader) of
+              {ok, {Mod, Fun}} -> Mod:Fun(Module);
+                             _ -> notfound
+            end
         end;
-	_ ->
-	    init:ensure_loaded(Module)
+    _ ->
+        init:ensure_loaded(Module)
     end.
 
 -spec stub_function(atom(), atom(), [_]) -> no_return().

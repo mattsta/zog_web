@@ -81,6 +81,10 @@ load_routes_by_env() ->
   case application:get_env(zog_web, app_route_dirs) of
     {ok, AppDirs} -> load_routes_by_dir(AppDirs);
                 _ -> no_app_env
+  end,
+  case application:get_env(zog_web, load_external_routes_fun) of
+    {ok, {M, F, A}} -> M:F(A);
+                  _ -> no_load_fun_env
   end.
 
 
@@ -224,17 +228,7 @@ load_route_from_route_db_instead_of_file(Hostname) when
     [{Hostname, R}] -> case lists:keyfind(module, 1, R) of
                          {module, M} when is_atom(M) ->
                            load_routes([R], {from_db, Hostname});
-                         {module, {binary, {ModName, B}}} ->
-                           % ModName is atom of Filename
-                           Filename = atom_to_list(ModName),
-                           code:purge(ModName),
-                           io:format("Loading ~p, ~p~n", [ModName, Filename]),
-                           code:load_binary(ModName, Filename, B),
-                           NewResult = lists:keyreplace(module, 1,
-                                         R, {module, ModName}),
-                           load_routes([NewResult], {from_db, Hostname});
-                         {module, {fetch, Name}} ->
-                           throw({not_implemented, {fetch, Name}})
+                         Other -> throw({not_implemented, Other})
                        end,
                        route(Hostname);
                  [] -> load_route_from_route_db_instead_of_file(tl(Hostname))
