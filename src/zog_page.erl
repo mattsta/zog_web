@@ -207,10 +207,11 @@ form_vars(FormVars, [RequestedVar | Xs]) when is_atom(RequestedVar) ->
   form_vars(FormVars, [atom_to_list(RequestedVar) | Xs]);
 
 form_vars(FormVars, [{RequestedVar, Default}|Xs]) when is_list(RequestedVar) ->
-  [proplists:get_value(RequestedVar, FormVars, Default) |
+  [iolist_to_binary(proplists:get_value(RequestedVar, FormVars, Default)) |
     form_vars(FormVars, Xs)];
 form_vars(FormVars, [RequestedVar | Xs]) when is_list(RequestedVar) ->
-  [proplists:get_value(RequestedVar, FormVars) | form_vars(FormVars, Xs)].
+  [iolist_to_binary(proplists:get_value(RequestedVar, FormVars, "")) |
+    form_vars(FormVars, Xs)].
 
 form_postvars(Req, RequestedVars) ->
   PostVars = Req:parse_post(),
