@@ -5,6 +5,7 @@
 -export([force_site/4, perm_redirect_immediate/3, temp_redirect_immediate/3]).
 
 % set regular/ssl cookies
+-export([use_cookie_type/1]).
 -export([regular_cookie/4, regular_cookie/5]).
 -export([secure_cookie/4, secure_cookie/5]).
 -export([make_state_cookie/2, make_state_cookie/3]).
