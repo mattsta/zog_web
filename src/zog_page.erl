@@ -163,7 +163,7 @@ cookie(Req, Names) when is_list(Names) andalso is_list(hd(Names)) ->
                  [case Name of
                     {CookieName, Default} -> proplists:get_value(CookieName,
                                                BakedCookies, Default);
-                                     Name -> proplists:get_Value(Name,
+                                     Name -> proplists:get_value(Name,
                                                BakedCookies)
                   end || Name <- Names]
   end;
