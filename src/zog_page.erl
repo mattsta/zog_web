@@ -1,7 +1,7 @@
 -module(zog_page).
 
 % site determination
--export([is_at_host/2, is_at_uri/2, is_using_protocol/2]).
+-export([host/1, is_at_host/2, is_at_uri/2, is_using_protocol/2]).
 -export([force_site/4, perm_redirect_immediate/3, temp_redirect_immediate/3]).
 
 % set regular/ssl cookies
