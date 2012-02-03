@@ -6,7 +6,7 @@
 
 % connection identity exports
 -export([extra/1]).
--export([uid/0, logged_in/0, login/1, logout/0]).
+-export([uid/0, secret/0, logged_in/0, login/1, logout/0]).
 
 % mochiweb_request wrapper exports
 -export([get_header_value/1, get_primary_header_value/1, get/1, dump/0]).
@@ -35,6 +35,9 @@ logged_in() ->
 
 uid() ->
   AuthenticationModule:session_uid(THIS).
+
+secret() ->
+  AuthenticationModule:session_secret(THIS).
 
 login(Uid) ->
   AuthenticationModule:set_session(THIS, Uid).
