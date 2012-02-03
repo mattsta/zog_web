@@ -298,7 +298,7 @@ ok(Req, Body) ->
   Req:ok({?CONTENT_TYPE, [{"Server", ?SRV_HDR}], Body}).
 
 ok(Req, Body, Cookies) ->
-  Req:ok({?CONTENT_TYPE, [{"Server", ?SRV_HDR} | Cookies], Body}).
+  Req:ok({?CONTENT_TYPE, [{"Server", ?SRV_HDR}, Cookies], Body}).
 
 idle_ping(Req) ->
   Req:respond({204, [{"Server", "Idle Ping.  Wake up."}], []}).
