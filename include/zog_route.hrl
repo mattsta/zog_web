@@ -8,6 +8,8 @@
                       :: [tokenized_domain()],
                     handler_module
                       :: module(),
+                    authentication_module = rbess_zog
+                      :: module(),
                     default_path_function = default_page
                       :: function_name() | function(),
                     default_subdomain_function = default_subdomain

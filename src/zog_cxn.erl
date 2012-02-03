@@ -1,4 +1,4 @@
--module(zog_cxn, [Req, Extra]).
+-module(zog_cxn, [Req, Extra, AuthenticationModule]).
 % We *could* use -extends(mochiweb_request) here, but erlang extends support
 % isn't competely operational *and* it handles missing methods using
 % error_handler causing more overhead than seems necessary.
@@ -31,16 +31,16 @@ extra(What) ->
 %%% user info / identity of connection
 %%%----------------------------------------------------------------------
 logged_in() ->
-  zsession:logged_in(Req).
+  AuthenticationModule:logged_in(THIS).
 
 uid() ->
-  zsession:session_uid(Req).
+  AuthenticationModule:session_uid(THIS).
 
 login(Uid) ->
-  zsession:set_session(Req, Uid).
+  AuthenticationModule:set_session(THIS, Uid).
 
 logout() ->
-  zsession:remove_session(Req).
+  AuthenticationModule:remove_session(THIS).
 
 %%%----------------------------------------------------------------------
 %%% wrappers around mochiweb_request for our Req
