@@ -149,8 +149,12 @@ cookie(Name, Data, Security, TimeLength, Domain, Path) ->
              expire       -> 0
            end,
 
-  mochiweb_cookies:cookie(Name, Data,
-    [{max_age, Length}, {domain, Domain}, {path, Path}, Secure]).
+  PreAllArgs = [{max_age, Length}, {path, Path}, Secure],
+  AllArgs = case Domain of
+              [] -> PreAllArgs;
+               _ -> [{domain, Domain} | PreAllArgs]
+            end,
+  mochiweb_cookies:cookie(Name, Data, AllArgs).
 
 -spec cookie(any(), string() | [string()] | [atom()]) -> list() | [].
 cookie(Req, Names) when is_list(Names) andalso is_atom(hd(Names)) ->
