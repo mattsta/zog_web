@@ -65,8 +65,9 @@ run_route(Req, OriginalHostname, Method, Path,
                default_path_function = DefaultFun,
                extra_args = Extra,
                authentication_module = AuthenModule,
+               authorization_module = AuthzModule,
                path_strategies = []} = Route) ->
-  Cxn = zog_cxn:new(Req, Extra, AuthenModule),
+  Cxn = zog_cxn:new(Req, Extra, AuthenModule, AuthzModule),
   HandlerMod = handler_mod(Path, Route),
   HandlerFun = handler_name(Path, DefaultFun),
   UsePath = use_path(Path, HandlerFun, DefaultFun),
@@ -76,8 +77,9 @@ run_route(Req, OriginalHostname, Method, Path,
     #zog_route{hostname = OriginalHostname,
                default_path_function = DefaultFun,
                authentication_module = AuthenModule,
+               authorization_module = AuthzModule,
                extra_args = Extra} = Route) ->
-  Cxn = zog_cxn:new(Req, Extra, AuthenModule),
+  Cxn = zog_cxn:new(Req, Extra, AuthenModule, AuthzModule),
   HandlerMod = handler_mod(Path, Route),
   HandlerFun = check_strategy(Method, Path, Cxn, Extra, HandlerMod, Route),
   UsePath = use_path(Path, HandlerFun, DefaultFun),
@@ -88,8 +90,10 @@ run_route(Req, _OriginalHostname, Method, Path,
     #zog_route{hostname = _OtherHostname,
                handler_module = HandlerMod,
                default_subdomain_function = DefaultSubdomainFun,
+               authentication_module = AuthenModule,
+               authorization_module = AuthzModule,
                extra_args = Extra}) ->
-  Cxn = zog_cxn:new(Req, Extra),
+  Cxn = zog_cxn:new(Req, Extra, AuthenModule, AuthzModule),
   fun_or_exported(HandlerMod, DefaultSubdomainFun, Method, Path, Cxn).
 
 -compile({inline, [{action_path, 1}]}).
@@ -145,6 +149,9 @@ run_strategy(Mod, Extras, Method, Path, Cxn,
   case Mod:RunFun(Method, Path, Cxn) of
     allow -> ok;
      deny -> {fail, FailFun};
+                     % this probably isn't right anymore.  we need to populate
+                     % the new Cxn with proper module params.  We can't use
+                     % the existing Cxn as an exiting Req.
     {deny, Error} -> NewCxn = zog_cxn:new(Cxn, [{error, Error} | Extras]),
                      Failure =
                      case is_function(FailFun) of

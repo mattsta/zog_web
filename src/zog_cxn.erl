@@ -1,4 +1,5 @@
--module(zog_cxn, [Req, Extra, AuthenticationModule]).
+-module(zog_cxn, [Req, Extra,
+                  AuthenticationModule, AuthorizationModule]).
 % We *could* use -extends(mochiweb_request) here, but erlang extends support
 % isn't competely operational *and* it handles missing methods using
 % error_handler causing more overhead than seems necessary.
@@ -7,6 +8,7 @@
 % connection identity exports
 -export([extra/1]).
 -export([uid/0, secret/0, logged_in/0, login/1, logout/0]).
+-export([permission/2]).
 
 % mochiweb_request wrapper exports
 -export([get_header_value/1, get_primary_header_value/1, get/1, dump/0]).
@@ -44,6 +46,11 @@ login(Uid) ->
 
 logout() ->
   AuthenticationModule:remove_session(THIS).
+
+% Cxn:permission(user, superadmin, <<"entiresite">>) = true | false.
+% Cxn:permission(content, owner, <<"post:id:64">>) = true | false.
+permission(AccessSpace, What) ->
+  AuthorizationModule:access(AccessSpace, What, THIS:uid()).
 
 %%%----------------------------------------------------------------------
 %%% wrappers around mochiweb_request for our Req

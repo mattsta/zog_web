@@ -10,6 +10,8 @@
                       :: module(),
                     authentication_module = rbess_zog
                       :: module(),
+                    authorization_module = racl_mux
+                      :: module(),
                     default_path_function = default_page
                       :: function_name() | function(),
                     default_subdomain_function = default_subdomain
