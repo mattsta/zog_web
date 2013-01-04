@@ -133,7 +133,7 @@ cookie(Name, Data, Security, TimeLength, Domain) ->
 cookie(Name, Data, Security, TimeLength, Domain, Path) ->
   Secure = case Security of
              secure -> {secure, true};
-                  _ -> {http_only, true}
+                  _ -> []
            end,
   Length = case TimeLength of
              year         -> ?DAY_SECONDS * 365;
@@ -149,7 +149,8 @@ cookie(Name, Data, Security, TimeLength, Domain, Path) ->
              expire       -> 0
            end,
 
-  PreAllArgs = [{max_age, Length}, {path, Path}, Secure],
+  PreAllArgs = lists:flatten(
+                [{http_only, true}, {max_age, Length}, {path, Path}, Secure]),
   AllArgs = case Domain of
               [] -> PreAllArgs;
                _ -> [{domain, Domain} | PreAllArgs]
