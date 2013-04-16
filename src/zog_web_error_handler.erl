@@ -1,7 +1,7 @@
 %%
 %% %CopyrightBegin%
 %%
-%% Copyright Ericsson AB 1996-2011. All Rights Reserved.
+%% Copyright Ericsson AB 1996-2013. All Rights Reserved.
 %%
 %% The contents of this file are subject to the Erlang Public License,
 %% Version 1.1, (the "License"); you may not use this file except in
@@ -16,19 +16,22 @@
 %%
 %% %CopyrightEnd%
 %%
-%% ZOG NB: This is from erlang/otp bd5e9c5746eb02666e8c6ae7af3f4dff514e3677
-%% (which is R14B04)
 -module(zog_web_error_handler).
+
+% This is mostly error_handler.erl from erlang/otp 037150979ff809df85757bd2b3f676e2e4c6be88
+
 %% FIXME: remove no_native directive after HiPE has been changed to make
 %% remote calls link to the target's Export* like BEAM does.
 %% For a detailed explanation see the commit titled
 %% "error_handler: add no_native compiler directive"
 -compile(no_native).
 
-%% A simple error handler.
+%% Callbacks called from the run-time system.
+-export([undefined_function/3,undefined_lambda/3,breakpoint/3]).
 
--export([undefined_function/3, undefined_lambda/3, stub_function/3,
-	 breakpoint/3]).
+%% Exported utility functions.
+-export([raise_undef_exception/3]).
+-export([stub_function/3]).
 
 -spec undefined_function(Module, Function, Args) ->
 	any() when
@@ -43,12 +46,7 @@ undefined_function(Module, Func, Args) ->
 		true ->
 		    apply(Module, Func, Args);
 		false ->
-		    case check_inheritance(Module, Args) of
-			{value, Base, Args1} ->
-			    apply(Base, Func, Args1);
-			none ->
-			    crash(Module, Func, Args)
-		    end
+		    call_undefined_function_handler(Module, Func, Args)
 	    end;
 	{module, _} ->
 	    crash(Module, Func, Args);
@@ -79,6 +77,14 @@ undefined_lambda(Module, Fun, Args) ->
 breakpoint(Module, Func, Args) ->
     (int()):eval(Module, Func, Args).
 
+-spec raise_undef_exception(Module, Function, Args) -> no_return() when
+      Module :: atom(),
+      Function :: atom(),
+      Args :: list().
+
+raise_undef_exception(Module, Func, Args) ->
+    crash({Module,Func,Args,[]}).
+
 %% Used to make the call to the 'int' module a "weak" one, to avoid
 %% building strong components in xref or dialyzer.
 
@@ -90,12 +96,12 @@ int() -> int.
 -spec crash(atom(), [term()]) -> no_return().
 
 crash(Fun, Args) ->
-    crash({Fun,Args}).
+    crash({Fun,Args,[]}).
 
--spec crash(atom(), atom(), arity()) -> no_return().
+-spec crash(atom(), atom(), arity() | [term()]) -> no_return().
 
 crash(M, F, A) ->
-    crash({M,F,A}).
+    crash({M,F,A,[]}).
 
 -spec crash(tuple()) -> no_return().
 
@@ -123,16 +129,16 @@ ensure_loaded(Module) ->
 	    halt(Error);
 	Pid when is_pid(Pid) ->
 	    case code:ensure_loaded(Module) of
-          {module, Module} = Found -> Found;
-          _ ->
-    io:format("Trying to load from handler: ~p~n", [Module]),
-            case application:get_env(zog_web, ancillary_code_loader) of
-              {ok, {Mod, Fun}} -> Mod:Fun(Module);
-                             _ -> notfound
-            end
+            {module, Module} = Found -> Found;
+            _ ->
+                io:format("Trying to load from handler: ~p~n", [Module]),
+                case application:get_env(zog_web, ancillary_code_loader) of
+                   {ok, {Mod, Fun}} -> Mod:Fun(Module);
+                                  _ -> notfound
+                 end
         end;
-    _ ->
-        init:ensure_loaded(Module)
+	_ ->
+	    init:ensure_loaded(Module)
     end.
 
 -spec stub_function(atom(), atom(), [_]) -> no_return().
@@ -140,27 +146,11 @@ ensure_loaded(Module) ->
 stub_function(Mod, Func, Args) ->
     exit({undef,[{Mod,Func,Args,[]}]}).
 
-check_inheritance(Module, Args) ->
-    Attrs = erlang:get_module_info(Module, attributes),
-    case lists:keyfind(extends, 1, Attrs) of
-	{extends, [Base]} when is_atom(Base), Base =/= Module ->
-	    %% This is just a heuristic for detecting abstract modules
-	    %% with inheritance so they can be handled; it would be
-	    %% much better to do it in the emulator runtime
-	    case lists:keyfind(abstract, 1, Attrs) of
-		{abstract, [true]} ->
-		    case lists:reverse(Args) of
-			[M|Rs] when tuple_size(M) > 1,
-			element(1,M) =:= Module,
-			tuple_size(element(2,M)) > 0,
-			is_atom(element(1,element(2,M))) ->
-			    {value, Base, lists:reverse(Rs, [element(2,M)])};
-			_ ->
-			    {value, Base, Args}
-		    end;
-		_ ->
-		    {value, Base, Args}
-	    end;
-	_ ->
-	    none
+call_undefined_function_handler(Module, Func, Args) ->
+    Handler = '$handle_undefined_function',
+    case erlang:function_exported(Module, Handler, 2) of
+	false ->
+	    crash(Module, Func, Args);
+	true ->
+	    Module:Handler(Func, Args)
     end.
