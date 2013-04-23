@@ -59,48 +59,48 @@ permission(AccessSpace, What, {?MODULE, [_, _, _, AuthorizationModule]}=THIS) ->
 %%%----------------------------------------------------------------------
 % We don't care about the types of anything here.  These just pass through.
 new(A, B, C, D) -> {?MODULE, [A, B, C, D]}.
-get_header_value(A, {?MODULE, [Req, _, _, _]}) -> Req:get_header_value(A, Req).
+get_header_value(A, {?MODULE, [Req, _, _, _]}) -> Req:get_header_value(A).
 get_combined_header_value(A,
-    {?MODULE, [Req, _, _, _]}) -> Req:get_combined_header_value(A, Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:get_combined_header_value(A).
 get_primary_header_value(A,
-    {?MODULE, [Req, _, _, _]}) -> Req:get_primary_header_value(A, Req).
-get(A, {?MODULE, [Req, _, _, _]}) -> Req:get(A, Req).
-dump({?MODULE, [Req, _, _, _]}) -> Req:dump(Req).
-send(A, {?MODULE, [Req, _, _, _]}) -> Req:send(A, Req).
-recv(A, {?MODULE, [Req, _, _, _]}) -> Req:recv(A, Req).
-recv(A, B, {?MODULE, [Req, _, _, _]}) -> Req:recv(A, B, Req).
-recv_body({?MODULE, [Req, _, _, _]}) -> Req:recv_body(Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:get_primary_header_value(A).
+get(A, {?MODULE, [Req, _, _, _]}) -> Req:get(A).
+dump({?MODULE, [Req, _, _, _]}) -> Req:dump().
+send(A, {?MODULE, [Req, _, _, _]}) -> Req:send(A).
+recv(A, {?MODULE, [Req, _, _, _]}) -> Req:recv(A).
+recv(A, B, {?MODULE, [Req, _, _, _]}) -> Req:recv(A, B).
+recv_body({?MODULE, [Req, _, _, _]}) -> Req:recv_body().
 recv_body(A,
-    {?MODULE, [Req, _, _, _]}) -> Req:recv_body(A, Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:recv_body(A).
 stream_body(A, B, C,
-    {?MODULE, [Req, _, _, _]}) -> Req:stream_body(A, B, C, Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:stream_body(A, B, C).
 start_response(A,
-    {?MODULE, [Req, _, _, _]}) -> Req:start_response(A, Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:start_response(A).
 start_response_length(A,
-    {?MODULE, [Req, _, _, _]}) -> Req:start_response_length(A, Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:start_response_length(A).
 start_raw_response(A,
-    {?MODULE, [Req, _, _, _]}) -> Req:start_raw_response(A, Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:start_raw_response(A).
 respond(A,
-    {?MODULE, [Req, _, _, _]}) -> Req:respond(A, Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:respond(A).
 ok(A,
-    {?MODULE, [Req, _, _, _]}) -> Req:ok(A, Req).
-not_found({?MODULE, [Req, _, _, _]}) -> Req:not_found(Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:ok(A).
+not_found({?MODULE, [Req, _, _, _]}) -> Req:not_found().
 not_found(A,
-    {?MODULE, [Req, _, _, _]}) -> Req:not_found(A, Req).
-parse_post({?MODULE, [Req, _, _, _]}) -> Req:parse_post(Req).
-parse_qs({?MODULE, [Req, _, _, _]}) -> Req:parse_qs(Req).
-should_close({?MODULE, [Req, _, _, _]}) -> Req:should_close(Req).
-cleanup({?MODULE, [Req, _, _, _]}) -> Req:cleanup(Req).
-parse_cookie({?MODULE, [Req, _, _, _]}) -> Req:parse_cookie(Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:not_found(A).
+parse_post({?MODULE, [Req, _, _, _]}) -> Req:parse_post().
+parse_qs({?MODULE, [Req, _, _, _]}) -> Req:parse_qs().
+should_close({?MODULE, [Req, _, _, _]}) -> Req:should_close().
+cleanup({?MODULE, [Req, _, _, _]}) -> Req:cleanup().
+parse_cookie({?MODULE, [Req, _, _, _]}) -> Req:parse_cookie().
 get_cookie_value(A,
-    {?MODULE, [Req, _, _, _]}) -> Req:get_cookie_value(A, Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:get_cookie_value(A).
 serve_file(A, B,
-    {?MODULE, [Req, _, _, _]}) -> Req:serve_file(A, B, Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:serve_file(A, B).
 serve_file(A, B, C,
-    {?MODULE, [Req, _, _, _]}) -> Req:serve_file(A, B, C, Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:serve_file(A, B, C).
 accepted_encodings(A,
-    {?MODULE, [Req, _, _, _]}) -> Req:accepted_encodings(A, Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:accepted_encodings(A).
 accepts_content_type(A,
-    {?MODULE, [Req, _, _, _]}) -> Req:accepts_content_type(A, Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:accepts_content_type(A).
 accepted_content_types(A,
-    {?MODULE, [Req, _, _, _]}) -> Req:accepted_content_types(A, Req).
+    {?MODULE, [Req, _, _, _]}) -> Req:accepted_content_types(A).
