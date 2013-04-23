@@ -11,7 +11,7 @@
 -export([permission/3]).
 
 % mochiweb_request wrapper exports
--export([new/5]).
+-export([new/4]).
 -export([get_header_value/2, get_primary_header_value/2, get_combined_header_value/2, get/2, dump/1]).
 -export([send/2, recv/2, recv/3, recv_body/1, recv_body/2, stream_body/4]).
 -export([start_response/2, start_response_length/2, start_raw_response/2]).
@@ -58,7 +58,7 @@ permission(AccessSpace, What, {?MODULE, [_, _, _, AuthorizationModule]}=THIS) ->
 %%% wrappers around mochiweb_request for our Req
 %%%----------------------------------------------------------------------
 % We don't care about the types of anything here.  These just pass through.
-new(A, B, C, D, {?MODULE, [Req, _, _, _]}) -> Req:new(A, B, C, D, Req).
+new(A, B, C, D) -> {?MODULE, [A, B, C, D]}.
 get_header_value(A, {?MODULE, [Req, _, _, _]}) -> Req:get_header_value(A, Req).
 get_combined_header_value(A,
     {?MODULE, [Req, _, _, _]}) -> Req:get_combined_header_value(A, Req).
