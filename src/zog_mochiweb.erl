@@ -69,7 +69,7 @@ run_route(Req, OriginalHostname, Method, Path,
                path_strategies = []} = Route) ->
   Cxn = zog_cxn:new(Req, Extra, AuthenModule, AuthzModule),
   HandlerMod = handler_mod(Path, Route),
-  HandlerFun = handler_name(Path, DefaultFun),
+  HandlerFun = handler_name(HandlerMod, Path, DefaultFun),
   UsePath = use_path(Path, HandlerFun, DefaultFun),
   fun_or_exported(HandlerMod, HandlerFun, DefaultFun, Method, UsePath, Cxn);
 
@@ -115,12 +115,12 @@ check_strategy(Method, Path, Cxn, Extras, Mod,
     #zog_route{hostname = Domain,
                default_path_function = DefaultFun}) ->
   case zog_route_server:strategy_for_hostpath(Domain, Path) of
-        [] -> handler_name(Path, DefaultFun);
+        [] -> handler_name(Mod, Path, DefaultFun);
     Strats -> SortedStrategies = keysort(#zog_route_strategy.strategy, Strats),
               case strategy_cycle(Mod, Extras,
                                   Method, Path, Cxn, SortedStrategies) of
                 {fail, FailFun} -> FailFun;
-                             ok -> handler_name(Path, DefaultFun)
+                             ok -> handler_name(Mod, Path, DefaultFun)
               end
   end.
 
@@ -168,10 +168,16 @@ run_strategy(Mod, Extras, Method, Path, Cxn,
 %%%----------------------------------------------------------------------
 %%% helpers
 %%%----------------------------------------------------------------------
--compile({inline, [{handler_name, 2}]}).
-handler_name(Path, DefaultFun) ->
+-compile({inline, [{handler_name, 3}]}).
+handler_name(Module, Path, DefaultFun) ->
   try
-    list_to_existing_atom(hd(Path))
+    FunName = list_to_existing_atom(hd(Path)),
+    % If function is exported, we can use it.
+    % Otherwise, we fall back to our default handler.
+    case erlang:function_exported(Module, FunName, 3) of
+       true -> FunName;
+      false -> DefaultFun
+    end
   catch
     error:badarg -> DefaultFun
   end.
